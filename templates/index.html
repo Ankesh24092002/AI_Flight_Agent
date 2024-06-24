@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Agent</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .flight-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #ffffff;
+            transition: box-shadow 0.3s;
+        }
+        .flight-card:hover {
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+        }
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .flight-header div {
+            flex: 1;
+        }
+        .flight-price {
+            font-size: 1.25em;
+            font-weight: bold;
+        }
+        .coupon {
+            background-color: #e7f3ff;
+            border: 1px solid #b8d8f0;
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            margin-top: 8px;
+        }
+        .loading {
+            text-align: center;
+            font-size: 1.2em;
+            color: #007bff;
+            margin: 20px 0;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-4">AI Travel Agent</h1>
+        <form id="query-form">
+            <div class="form-group">
+                <input type="text" class="form-control" id="user_query" name="user_query" placeholder="Ask me anything about travel..." required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+        </form>
+        <hr>
+        <div id="results">
+            <!-- Results will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $('#query-form').on('submit', function(event){
+                event.preventDefault();
+                let userQuery = $('#user_query').val();
+                $('#results').html('<div class="loading">Fetching results, please wait...</div>');
+                $.ajax({
+                    url: '/query',
+                    method: 'POST',
+                    data: { user_query: userQuery },
+                    success: function(response){
+                        $('#results').empty();
+                        if (response.flights) {
+                            let resultHtml = `<h2>Flights from ${response.source_city} to ${response.destination_city} on ${response.date}</h2>`;
+                            response.flights.forEach(flight => {
+                                resultHtml += `
+                                    <div class="flight-card">
+                                        <div class="flight-header">
+                                            <div class="flight-details">
+                                                <strong>${flight.airline_name}</strong><br>
+                                                Departure: ${flight.departure}<br>
+                                                Arrival: ${flight.arrival}
+                                            </div>
+                                            <div class="flight-price">
+                                                ₹${flight.price}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            $('#results').append(resultHtml);
+                        } else if (response.error) {
+                            $('#results').append(`<div class="alert alert-danger">${response.error}</div>`);
+                        } else if (response.response) {
+                            $('#results').append(`<div class="alert alert-info">${response.response}</div>`);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
